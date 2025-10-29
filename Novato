@@ -1,0 +1,118 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define TAMANHO_FILA 5
+
+// Estrutura da peça
+struct Peca {
+    int id;
+    char nome[2]; // 'I', 'O', 'T', 'L'
+};
+
+// Fila circular
+struct Fila {
+    struct Peca pecas[TAMANHO_FILA];
+    int frente;
+    int tras;
+    int quantidade;
+};
+
+// Geração automática de peças
+struct Peca gerarPeca(int id) {
+    struct Peca nova;
+    nova.id = id;
+    char tipos[4][2] = {"I", "O", "T", "L"};
+    strcpy(nova.nome, tipos[rand() % 4]);
+    return nova;
+}
+
+// Inicializa a fila com 5 peças
+void inicializarFila(struct Fila *fila) {
+    fila->frente = 0;
+    fila->tras = 0;
+    fila->quantidade = 0;
+    for (int i = 0; i < TAMANHO_FILA; i++) {
+        fila->pecas[fila->tras] = gerarPeca(i + 1);
+        fila->tras = (fila->tras + 1) % TAMANHO_FILA;
+        fila->quantidade++;
+    }
+}
+
+// Enfileira uma nova peça
+void enfileirar(struct Fila *fila, int *idAtual) {
+    if (fila->quantidade == TAMANHO_FILA) {
+        printf("⚠️ Fila cheia! Jogue uma peça antes de inserir outra.\n");
+        return;
+    }
+    fila->pecas[fila->tras] = gerarPeca(++(*idAtual));
+    fila->tras = (fila->tras + 1) % TAMANHO_FILA;
+    fila->quantidade++;
+    printf("✅ Nova peça inserida!\n");
+}
+
+// Remove a peça da frente
+void desenfileirar(struct Fila *fila) {
+    if (fila->quantidade == 0) {
+        printf("⚠️ Fila vazia! Nenhuma peça para jogar.\n");
+        return;
+    }
+    struct Peca removida = fila->pecas[fila->frente];
+    fila->frente = (fila->frente + 1) % TAMANHO_FILA;
+    fila->quantidade--;
+    printf("🕹️ Peça jogada: ID %d - Tipo %s\n", removida.id, removida.nome);
+}
+
+// Exibe o estado atual da fila
+void exibirFila(struct Fila *fila) {
+    printf("\n🎮 Fila de Peças Futuras:\n");
+    printf("%-5s %-5s\n", "ID", "Tipo");
+    int i = fila->frente;
+    for (int count = 0; count < fila->quantidade; count++) {
+        printf("%-5d %-5s\n", fila->pecas[i].id, fila->pecas[i].nome);
+        i = (i + 1) % TAMANHO_FILA;
+    }
+    if (fila->quantidade == 0) {
+        printf("⚠️ Nenhuma peça na fila.\n");
+    }
+}
+
+int main() {
+    struct Fila fila;
+    int idAtual = 5;
+    int opcao;
+
+    srand(time(NULL));
+    inicializarFila(&fila);
+
+    do {
+        printf("\n=== MENU TETRIS STACK ===\n");
+        printf("1. Jogar peça (remover da frente)\n");
+        printf("2. Inserir nova peça (final da fila)\n");
+        printf("3. Visualizar fila\n");
+        printf("0. Sair\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                desenfileirar(&fila);
+                break;
+            case 2:
+                enfileirar(&fila, &idAtual);
+                break;
+            case 3:
+                exibirFila(&fila);
+                break;
+            case 0:
+                printf("👋 Saindo do jogo...\n");
+                break;
+            default:
+                printf("⚠️ Opcao invalida. Tente novamente.\n");
+        }
+
+    } while (opcao != 0);
+
+    return 0;
+}
