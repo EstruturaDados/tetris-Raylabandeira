@@ -1,0 +1,164 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define TAM_FILA 5
+#define TAM_PILHA 3
+
+// Estrutura da peça
+struct Peca {
+    int id;
+    char nome[2]; // 'I', 'O', 'T', 'L'
+};
+
+// Fila circular
+struct Fila {
+    struct Peca pecas[TAM_FILA];
+    int frente;
+    int tras;
+    int quantidade;
+};
+
+// Pilha linear
+struct Pilha {
+    struct Peca pecas[TAM_PILHA];
+    int topo;
+};
+
+// Gera peça aleatória
+struct Peca gerarPeca(int id) {
+    struct Peca nova;
+    nova.id = id;
+    char tipos[4][2] = {"I", "O", "T", "L"};
+    strcpy(nova.nome, tipos[rand() % 4]);
+    return nova;
+}
+
+// Inicializa fila com 5 peças
+void inicializarFila(struct Fila *fila, int *idAtual) {
+    fila->frente = 0;
+    fila->tras = 0;
+    fila->quantidade = 0;
+    for (int i = 0; i < TAM_FILA; i++) {
+        fila->pecas[fila->tras] = gerarPeca(++(*idAtual));
+        fila->tras = (fila->tras + 1) % TAM_FILA;
+        fila->quantidade++;
+    }
+}
+
+// Enfileira nova peça automaticamente
+void enfileirar(struct Fila *fila, int *idAtual) {
+    if (fila->quantidade == TAM_FILA) return;
+    fila->pecas[fila->tras] = gerarPeca(++(*idAtual));
+    fila->tras = (fila->tras + 1) % TAM_FILA;
+    fila->quantidade++;
+}
+
+// Remove peça da frente (jogar)
+void desenfileirar(struct Fila *fila) {
+    if (fila->quantidade == 0) {
+        printf("⚠️ Fila vazia!\n");
+        return;
+    }
+    struct Peca jogada = fila->pecas[fila->frente];
+    fila->frente = (fila->frente + 1) % TAM_FILA;
+    fila->quantidade--;
+    printf("🕹️ Peça jogada: ID %d - Tipo %s\n", jogada.id, jogada.nome);
+}
+
+// Exibe fila
+void exibirFila(struct Fila *fila) {
+    printf("\n🎮 Fila de Peças Futuras:\n");
+    printf("%-5s %-5s\n", "ID", "Tipo");
+    int i = fila->frente;
+    for (int count = 0; count < fila->quantidade; count++) {
+        printf("%-5d %-5s\n", fila->pecas[i].id, fila->pecas[i].nome);
+        i = (i + 1) % TAM_FILA;
+    }
+}
+
+// Exibe pilha
+void exibirPilha(struct Pilha *pilha) {
+    printf("\n📦 Pilha de Reserva:\n");
+    if (pilha->topo == -1) {
+        printf("⚠️ Pilha vazia.\n");
+        return;
+    }
+    printf("%-5s %-5s\n", "ID", "Tipo");
+    for (int i = pilha->topo; i >= 0; i--) {
+        printf("%-5d %-5s\n", pilha->pecas[i].id, pilha->pecas[i].nome);
+    }
+}
+
+// Push: reserva peça da frente da fila
+void reservarPeca(struct Fila *fila, struct Pilha *pilha) {
+    if (pilha->topo == TAM_PILHA - 1) {
+        printf("⚠️ Pilha cheia! Use uma peça reservada antes.\n");
+        return;
+    }
+    if (fila->quantidade == 0) {
+        printf("⚠️ Fila vazia!\n");
+        return;
+    }
+    pilha->pecas[++(pilha->topo)] = fila->pecas[fila->frente];
+    fila->frente = (fila->frente + 1) % TAM_FILA;
+    fila->quantidade--;
+    printf("📥 Peça reservada com sucesso!\n");
+}
+
+// Pop: usa peça reservada
+void usarReservada(struct Pilha *pilha) {
+    if (pilha->topo == -1) {
+        printf("⚠️ Pilha vazia! Nenhuma peça reservada.\n");
+        return;
+    }
+    struct Peca usada = pilha->pecas[(pilha->topo)--];
+    printf("📤 Peça usada: ID %d - Tipo %s\n", usada.id, usada.nome);
+}
+
+int main() {
+    struct Fila fila;
+    struct Pilha pilha;
+    int idAtual = 0;
+    int opcao;
+
+    srand(time(NULL));
+    pilha.topo = -1;
+    inicializarFila(&fila, &idAtual);
+
+    do {
+        printf("\n=== MENU TETRIS STACK - AVENTUREIRO ===\n");
+        printf("1. Jogar peça\n");
+        printf("2. Reservar peça\n");
+        printf("3. Usar peça reservada\n");
+        printf("0. Sair\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                desenfileirar(&fila);
+                enfileirar(&fila, &idAtual);
+                break;
+            case 2:
+                reservarPeca(&fila, &pilha);
+                enfileirar(&fila, &idAtual);
+                break;
+            case 3:
+                usarReservada(&pilha);
+                break;
+            case 0:
+                printf("👋 Saindo do jogo...\n");
+                break;
+            default:
+                printf("⚠️ Opcao invalida.\n");
+        }
+
+        exibirFila(&fila);
+        exibirPilha(&pilha);
+
+    } while (opcao != 0);
+
+    return 0;
+}
